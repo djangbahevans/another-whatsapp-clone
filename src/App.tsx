@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react';
 import { useStateValue } from './StateProvider';
 import {
   BrowserRouter as Router,
-  Switch,
   Route,
-  Redirect,
+  Navigate,
+  Routes,
 } from 'react-router-dom';
 //importing firebase
-import db from './firebase';
-import { auth, firebase } from './firebase';
+import { auth, db } from './firebase';
 //importing actions
 import { setUser } from './actions/userAction';
 //importing components
@@ -24,11 +23,23 @@ import LinearProgress from '@mui/material/LinearProgress';
 //importing styles
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+} from 'firebase/firestore';
+import { Room } from './types';
+import { updateProfile } from 'firebase/auth';
 
 function App() {
   const [{ user }, dispatch] = useStateValue();
-  const [rooms, setRooms] = useState([]);
-  const [isRoomExist, setIsRoomExist] = useState('');
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [isRoomExist, setIsRoomExist] = useState<string | number>('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -37,42 +48,37 @@ function App() {
         dispatch(setUser(authUser));
         setLoading(true);
 
-        db.collection('rooms')
-          .orderBy('timestamp', 'desc')
-          .onSnapshot((snapshot) =>
-            setRooms(
-              snapshot.docs.map((doc) => ({
-                id: doc.id,
-                data: doc.data(),
-              }))
-            )
+        const roomsRef = collection(db, 'rooms');
+        const q = query(roomsRef, orderBy('timestamp', 'desc'));
+
+        getDocs(q).then((snap) => {
+          setRooms(
+            snap.docs.map((doc) => ({
+              id: doc.id,
+              data: doc.data(),
+            }))
           );
+        });
 
         if (authUser.isAnonymous === true && authUser.displayName === null) {
           var anonymousName =
             'Anonymous' + ' ' + Math.floor(Math.random() * 1000000);
 
-          auth.currentUser.updateProfile({
-            displayName: anonymousName,
-            photoURL: '',
-          });
-
-          db.collection('users')
-            .doc(authUser.uid)
-            .set({
-              name: anonymousName,
-              about: 'Hey there! I am using WhatsApp.',
+          if (auth.currentUser)
+            updateProfile(auth.currentUser, {
+              displayName: anonymousName,
               photoURL: '',
-              role: 'anonymous',
-              dateJoined: firebase.firestore.FieldValue.serverTimestamp(),
-            })
-            .then(function () {
-              console.log('Document successfully updated!');
-            })
-            .catch(function (error) {
-              // The document probably doesn't exist.
-              console.error('Error updating document: ', error);
             });
+
+          const userRef = doc(db, 'users', authUser.uid);
+
+          setDoc(userRef, {
+            name: anonymousName,
+            about: 'Hey there! I am using WhatsApp.',
+            photoURL: '',
+            role: 'anonymous',
+            dateJoined: serverTimestamp(),
+          });
         }
 
         if (
@@ -81,23 +87,22 @@ function App() {
           authUser.photoURL !== null
         ) {
           const errorAbout = 'errorAbout';
-          db.collection('users')
-            .doc(authUser.uid)
-            .get()
-            .then(function (doc) {
-              if (doc.exists) {
-                // console.log("USER EXIST");
-              } else {
-                db.collection('users').doc(authUser.uid).set({
+
+          const userRef = doc(db, 'users', authUser.uid);
+
+          getDoc(userRef)
+            .then((doc) => {
+              if (!doc.exists()) {
+                setDoc(userRef, {
                   name: authUser.displayName,
                   about: 'Hey there! I am using WhatsApp.',
                   photoURL: user?.photoURL,
                   role: 'regular',
-                  dateJoined: firebase.firestore.FieldValue.serverTimestamp(),
+                  dateJoined: serverTimestamp(),
                 });
               }
             })
-            .catch(function (error) {
+            .catch((error) => {
               toastInfo(`${error}`, errorAbout, 'top-center');
             });
         } else if (
@@ -106,23 +111,22 @@ function App() {
           authUser.photoURL === null
         ) {
           const errorAbout = 'errorAbout';
-          db.collection('users')
-            .doc(authUser.uid)
-            .get()
-            .then(function (doc) {
-              if (doc.exists) {
-                console.log('USER EXIST');
-              } else {
-                db.collection('users').doc(authUser.uid).set({
+
+          const userRef = doc(db, 'users', authUser.uid);
+
+          getDoc(userRef)
+            .then((doc) => {
+              if (!doc.exists()) {
+                setDoc(userRef, {
                   name: authUser.displayName,
                   about: 'Hey there! I am using WhatsApp.',
                   photoURL: '',
                   role: 'regular',
-                  dateJoined: firebase.firestore.FieldValue.serverTimestamp(),
+                  dateJoined: serverTimestamp(),
                 });
               }
             })
-            .catch(function (error) {
+            .catch((error) => {
               toastInfo(`${error}`, errorAbout, 'top-center');
             });
         }
@@ -155,8 +159,8 @@ function App() {
           ) : (
             <div className="app__body">
               <Router>
-                <Switch>
-                  <Route exact path="/">
+                <Routes>
+                  <Route path="/">
                     <Sidebar
                       rooms={rooms}
                       setIsRoomExist={setIsRoomExist}
@@ -169,7 +173,7 @@ function App() {
                     </Hidden>
                   </Route>
 
-                  <Route exact path="/rooms/:roomId">
+                  <Route path="/rooms/:roomId">
                     <Hidden only={['xs']}>
                       {' '}
                       {/* Sidebar component will be hidden in mobile view */}
@@ -183,9 +187,9 @@ function App() {
                   </Route>
 
                   <Route path="*">
-                    <Redirect to="/" />
+                    <Navigate to="/" />
                   </Route>
-                </Switch>
+                </Routes>
               </Router>
             </div>
           )}

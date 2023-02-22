@@ -1,11 +1,19 @@
 export type Room = {
   id: string;
-  name: string;
+  name?: string;
+  data: {
+    name?: string;
+  };
 };
 
-export type User = {
-  photoURL: string;
-  displayName: string;
+export type Message = {
   uid: string;
-  isAnonymous: boolean;
+  id: string;
+  timestamp?: any;
+  photo: string;
+  video: string;
+  name: string;
+  url: string;
+  message: string;
+  caption?: string;
 };

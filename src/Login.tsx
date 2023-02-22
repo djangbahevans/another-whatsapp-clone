@@ -3,22 +3,23 @@ import { toastInfo } from './shared/toastInfo';
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import GoogleLogo from './images/Google G Logo.png';
 import './Login.css';
+import { signInAnonymously, signInWithPopup } from 'firebase/auth';
 
 function Login() {
   const signInGoogle = () => {
     const google = 'google';
 
-    auth
-      .signInWithPopup(provider)
-      .catch((error) => toastInfo(`${error}`, google, 'top-center'));
+    signInWithPopup(auth, provider).catch((error) =>
+      toastInfo(`${error}`, google, 'top-center')
+    );
   };
 
   const loginAnonymously = () => {
     const anonymous = 'anonymous';
 
-    auth
-      .signInAnonymously()
-      .catch((error) => toastInfo(`${error}`, anonymous, 'top-center'));
+    signInAnonymously(auth).catch((error) =>
+      toastInfo(`${error}`, anonymous, 'top-center')
+    );
   };
 
   return (

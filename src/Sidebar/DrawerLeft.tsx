@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react';
+import {
+  ChangeEventHandler,
+  FC,
+  MouseEventHandler,
+  useEffect,
+  useState,
+} from 'react';
 import { useStateValue } from '../StateProvider';
 //importing components
 import DropdownMenu from '../shared/DropdownMenu';
@@ -20,76 +26,70 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 //importing styles
 import './DrawerLeft.css';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { updateProfile } from 'firebase/auth';
+import { auth, db, storage } from '../firebase';
 
 type Props = {
   drawerLeft: boolean;
   setDrawerLeft?: (open: boolean) => void;
-  db: any;
 };
 
-const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
+const DrawerLeft: FC<Props> = ({ drawerLeft, setDrawerLeft }) => {
   const [{ user }] = useStateValue();
   const [name, setName] = useState('');
   const [about, setAbout] = useState('');
   const [showEditName, setShowEditName] = useState(false);
   const [showEditAbout, setShowEditAbout] = useState(false);
   const [showProfilePhoto, setShowProfilePhoto] = useState(false);
-  const [uploadPhotoLink, setUploadPhotoLink] = useState(null);
+  const [uploadPhotoLink, setUploadPhotoLink] = useState<string | null>(null);
   const [showDialogUpload, setShowDialogUpload] = useState(false);
-  const [menuProfile, setMenuProfile] = useState(null);
+  const [menuProfile, setMenuProfile] = useState<Element | null>(null);
   const [photo, setPhoto] = useState('');
 
   useEffect(() => {
-    setName(user?.displayName);
+    setName(user?.displayName || '');
 
-    db.collection('users')
-      .doc(user?.uid)
-      .onSnapshot(function (doc) {
-        setPhoto(doc.data()?.photoURL);
-        setAbout(doc.data()?.about);
+    if (user?.uid) {
+      const userRef = doc(db, 'users', user?.uid);
+
+      getDoc(userRef).then((snap) => {
+        const user = snap.data();
+        setPhoto(user?.photoURL || '');
+        setAbout(user?.about || '');
       });
+    }
   }, [user?.uid, user?.displayName, db]);
 
-  const updateName = (e) => {
+  const updateName: MouseEventHandler<SVGSVGElement> = (e) => {
     e.preventDefault();
 
     if (user?.uid) {
-      db.collection('users')
-        .doc(user.uid)
-        .update({
-          name: name,
-        })
-        .then(function () {
-          console.log('Document successfully updated!');
-        })
-        .catch(function (error) {
-          // The document probably doesn't exist.
-          console.error('Error updating document: ', error);
-        });
+      const userRef = doc(db, 'users', user?.uid);
 
-      auth.currentUser.updateProfile({
-        displayName: name,
+      updateDoc(userRef, {
+        name,
       });
+
+      if (auth.currentUser) {
+        updateProfile(auth.currentUser, {
+          displayName: name,
+        });
+      }
     }
     setShowEditName(false);
   };
 
-  const updateAbout = (e) => {
+  const updateAbout: MouseEventHandler<SVGSVGElement> = (e) => {
     e.preventDefault();
 
     if (user?.uid) {
-      db.collection('users')
-        .doc(user.uid)
-        .update({
-          about: about,
-        })
-        .then(function () {
-          console.log('Document successfully updated!');
-        })
-        .catch(function (error) {
-          // The document probably doesn't exist.
-          console.error('Error updating document: ', error);
-        });
+      const userRef = doc(db, 'users', user?.uid);
+
+      updateDoc(userRef, {
+        about,
+      });
     }
     setShowEditAbout(false);
   };
@@ -103,7 +103,7 @@ const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
   };
 
   const handleDrawerClose = () => {
-    setDrawerLeft(false);
+    setDrawerLeft?.(false);
     setShowEditName(false);
     setShowEditAbout(false);
   };
@@ -137,34 +137,36 @@ const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
     );
   };
 
-  const onFileChangeImage = async (e) => {
+  const onFileChangeImage: ChangeEventHandler<HTMLInputElement> = async (e) => {
     const imageFileSizeToastId = 'imageFileSizeToastId';
-    const file = e.target.files[0];
-
-    if (file.size > 3 * 1024 * 1024) {
-      toastInfo(
-        'Image should not exceed more than 3Mb',
-        imageFileSizeToastId,
-        'top-center'
-      );
-    } else {
-      const storageRef = storage.ref();
-      if (user?.isAnonymous === true) {
-        const imagesRef = storageRef.child(`user/anonymous/${user?.uid}`);
-        const fileRef = imagesRef.child(file.name);
-        await fileRef.put(file);
-        setUploadPhotoLink(await fileRef.getDownloadURL());
-        console.log('uploading image', uploadPhotoLink);
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        toastInfo(
+          'Image should not exceed more than 3Mb',
+          imageFileSizeToastId,
+          'top-center'
+        );
       } else {
-        const imagesRef = storageRef.child(`user/regular/${user?.uid}`);
-        const fileRef = imagesRef.child(file.name);
-        await fileRef.put(file);
-        setUploadPhotoLink(await fileRef.getDownloadURL());
-        console.log('uploading image', uploadPhotoLink);
+        const storageRef = ref(storage);
+        if (user?.isAnonymous === true) {
+          const imagesRef = ref(storageRef, `user/anonymous/${user?.uid}`);
+          const fileRef = ref(imagesRef, file.name);
+          await uploadBytes(fileRef, file);
+
+          setUploadPhotoLink(await getDownloadURL(fileRef));
+        } else {
+          const imagesRef = ref(storageRef, `user/regular/${user?.uid}`);
+          const fileRef = ref(imagesRef, file.name);
+          await uploadBytes(fileRef, file);
+
+          setUploadPhotoLink(await getDownloadURL(fileRef));
+          console.log('uploading image', uploadPhotoLink);
+        }
       }
+      setMenuProfile(null);
+      setShowDialogUpload(true);
     }
-    setMenuProfile(null);
-    setShowDialogUpload(true);
   };
 
   const uploadPhoto = () => {
@@ -185,16 +187,16 @@ const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
     const uploadPhotoError = 'uploadPhotoError';
 
     if (uploadPhotoLink) {
-      auth.currentUser.updateProfile({
-        photoURL: uploadPhotoLink,
-      });
-      db.collection('users').doc(user?.uid).set(
-        {
+      if (auth.currentUser && user?.uid) {
+        updateProfile(auth.currentUser, {
           photoURL: uploadPhotoLink,
-        },
-        { merge: true }
-      );
-      setShowDialogUpload(false);
+        });
+
+        const userRef = doc(db, 'users', user?.uid);
+        setDoc(userRef, { photoURL: uploadPhotoLink }, { merge: true });
+
+        setShowDialogUpload(false);
+      }
     } else {
       toastInfo('Select photo to upload!', uploadPhotoError, 'top-center');
     }
@@ -204,7 +206,7 @@ const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
     setShowDialogUpload(false);
   };
 
-  const handleProfileMenu = (event) => {
+  const handleProfileMenu: MouseEventHandler<HTMLDivElement> = (event) => {
     setMenuProfile(event.currentTarget);
   };
 
@@ -302,7 +304,7 @@ const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
               </DialogTitle>
               <DialogContent id="form-dialog-content">
                 <div className="profileMenu__uploadPhoto_dialog">
-                  <img src={uploadPhotoLink} alt="" />
+                  <img src={uploadPhotoLink || undefined} alt="" />
                 </div>
               </DialogContent>
               <DialogActions>
@@ -324,7 +326,7 @@ const DrawerLeft = ({ drawerLeft, setDrawerLeft, db, auth, storage }) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     type="text"
-                    styles={{ borderBottom: '1px solid green !important' }}
+                    style={{ borderBottom: '1px solid green !important' }}
                   />
                   <CheckIcon onClick={updateName} />
                 </>

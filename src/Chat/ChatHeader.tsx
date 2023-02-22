@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FC, MouseEventHandler, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStateValue } from '../StateProvider';
 //importing components
@@ -17,21 +17,33 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 //importing styles
 import './ChatHeader.css';
+import { Message } from '../types';
+import { deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
-function ChatHeader({
+type Props = {
+  roomCreatedBy: string;
+  roomOwner: string;
+  roomName: string;
+  roomId: string;
+  _roomId: string;
+  messages: Message[];
+  isRoomExist: string | number;
+};
+
+const ChatHeader: FC<Props> = ({
   roomCreatedBy,
   roomOwner,
   roomName,
   roomId,
   _roomId,
   messages,
-  db,
   isRoomExist,
-}) {
+}) => {
   const [{ user }] = useStateValue();
   const [drawerRightSearch, setDrawerRightSearch] = useState(false);
   const [drawerRightInfo, setDrawerRightInfo] = useState(false);
-  const [menuChat, setMenuChat] = useState(null);
+  const [menuChat, setMenuChat] = useState<Element | null>(null);
   const [role, setRole] = useState('');
   const [showDate, setShowDate] = useState(false);
   const [isLastMessage, setIsLastMessage] = useState(false);
@@ -39,12 +51,12 @@ function ChatHeader({
 
   useEffect(() => {
     const errorAbout = 'errorAbout';
-    if (user.uid) {
-      db.collection('users')
-        .doc(user.uid)
-        .get()
-        .then(function (doc) {
-          if (doc.exists) {
+    if (user?.uid) {
+      const userRef = doc(db, 'users', user.uid);
+
+      getDoc(userRef)
+        .then((doc) => {
+          if (doc.exists()) {
             setRole(doc.data().role);
           }
         })
@@ -70,7 +82,7 @@ function ChatHeader({
       setDrawerRightInfo(false);
       setDrawerRightSearch(false);
     }
-  }, [user.uid, user.displayName, user.isAnonymous, db, messages, roomId]);
+  }, [user?.uid, user?.displayName, user?.isAnonymous, db, messages, roomId]);
 
   console.log('ROOOM ID', roomId);
   console.log('__ROOOM ID', _roomId);
@@ -140,14 +152,14 @@ function ChatHeader({
   const deleteRoom = () => {
     const roomDeleted = 'roomDeleted';
 
-    if (roomOwner === user.uid || role === 'admin') {
-      db.collection('rooms')
-        .doc(roomId)
-        .delete()
-        .then(function () {
+    if (roomOwner === user?.uid || role === 'admin') {
+      const roomRef = doc(db, 'rooms', roomId);
+
+      deleteDoc(roomRef)
+        .then(() => {
           toastInfo('Room successfully deleted!', roomDeleted, 'top-center');
         })
-        .catch(function (error) {
+        .catch((error) => {
           toastInfo(`Error removing room! ${error}`, roomDeleted, 'top-center');
         });
       navigate('/');
@@ -164,7 +176,7 @@ function ChatHeader({
     setMenuChat(null);
   };
 
-  const handleMenuOpen = (event) => {
+  const handleMenuOpen: MouseEventHandler<HTMLButtonElement> = (event) => {
     setMenuChat(event.currentTarget);
   };
 
@@ -201,19 +213,14 @@ function ChatHeader({
       <DrawerRightSearch
         drawerRightSearch={drawerRightSearch}
         setDrawerRightSearch={setDrawerRightSearch}
-        roomId={roomId}
         messages={messages}
-        db={db}
         user={user}
       />
 
       <DrawerRightInfo
         drawerRightInfo={drawerRightInfo}
         setDrawerRightInfo={setDrawerRightInfo}
-        roomId={roomId}
         messages={messages}
-        db={db}
-        user={user}
       />
 
       <Hidden smUp>
@@ -256,12 +263,12 @@ function ChatHeader({
         <DropdownMenu
           menuLists={menuChatLists}
           menu={menuChat}
-          handleMenuOpen={handleMenuOpen}
+          // handleMenuOpen={handleMenuOpen}
           handleMenuClose={handleMenuClose}
         />
       </div>
     </div>
   );
-}
+};
 
 export default ChatHeader;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FC } from 'react';
 //importing components
 import SearchBar from '../shared/SearchBar';
 //importing material-ui
@@ -10,8 +10,17 @@ import CloseIcon from '@mui/icons-material/Close';
 import DoneIcon from '@mui/icons-material/Done';
 //importing styles
 import './DrawerRightSearch.css';
+import { Message } from '../types';
+import { User } from 'firebase/auth';
 
-const DrawerRightSearch = ({
+type Props = {
+  drawerRightSearch: boolean;
+  setDrawerRightSearch: (open: boolean) => void;
+  messages: Message[];
+  user: User | null;
+};
+
+const DrawerRightSearch: FC<Props> = ({
   drawerRightSearch,
   setDrawerRightSearch,
   messages,
@@ -20,8 +29,8 @@ const DrawerRightSearch = ({
   const [search, setSearch] = useState('');
   const [isFoundMessage, setIsFoundMessage] = useState(false);
 
-  const findMessage = function (myMessages) {
-    return function (x) {
+  const findMessage = function (myMessages: string) {
+    return function (x: Message) {
       var searchMessage = x.message + '' + x.caption;
       return (
         searchMessage.toLowerCase().includes(myMessages.toLowerCase()) ||
@@ -107,7 +116,7 @@ const DrawerRightSearch = ({
                             <br />
                           </p>
                           <p id="last_p">
-                            {message.uid === user.uid ? <DoneIcon /> : null}
+                            {message.uid === user?.uid ? <DoneIcon /> : null}
                             {message.message}
                             {message.caption}
                           </p>

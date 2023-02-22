@@ -1,3 +1,4 @@
+import { User } from 'firebase/auth';
 import {
   createContext,
   Dispatch,
@@ -7,7 +8,6 @@ import {
   useReducer,
 } from 'react';
 import reducer, { State } from './reducer';
-import { User } from './types';
 
 type ContextType = [
   State,

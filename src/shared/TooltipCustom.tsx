@@ -1,7 +1,14 @@
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
+import { FC, MouseEventHandler, ReactNode } from 'react';
 
-function TooltipCustom({ name, icon, onClick }) {
+type Props = {
+  name: string;
+  icon: ReactNode;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
+};
+
+const TooltipCustom: FC<Props> = ({ name, icon, onClick }) => {
   return (
     <div>
       <Tooltip
@@ -16,6 +23,6 @@ function TooltipCustom({ name, icon, onClick }) {
       </Tooltip>
     </div>
   );
-}
+};
 
 export default TooltipCustom;

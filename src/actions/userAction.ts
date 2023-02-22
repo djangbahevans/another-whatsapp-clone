@@ -1,6 +1,8 @@
-export const setUser = (authUser) => {
+import { User } from 'firebase/auth';
+
+export const setUser = (authUser: User | null) => {
   return {
-    type: 'SET_USER',
-    user: authUser,
+    type: 'SET_USER' as const,
+    payload: authUser,
   };
 };

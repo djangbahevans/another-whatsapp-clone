@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
 // importing component
 import DrawerRightInfo from './DrawerRightInfo';
@@ -9,8 +9,19 @@ import AlarmIcon from '@mui/icons-material/Alarm';
 import DoneIcon from '@mui/icons-material/Done';
 //importing styles
 import './ChatBody.css';
+import { Message } from '../types';
+import { User } from 'firebase/auth';
 
-const ChatBody = ({
+type Props = {
+  roomOwner: string;
+  roomCreatedBy: string;
+  messages: Message[];
+  user: User | null;
+  roomId: string;
+  isRoomExist: string | number;
+};
+
+const ChatBody: FC<Props> = ({
   roomOwner,
   roomCreatedBy,
   messages,
@@ -18,7 +29,7 @@ const ChatBody = ({
   roomId,
   isRoomExist,
 }) => {
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   // const { roomId } = useParams();
   const [playing, setPlaying] = useState(false);
   // const [showDialog, setShowDialog] = useState(false);
@@ -48,7 +59,7 @@ const ChatBody = ({
 
   const scrollToBottom = () => {
     if (roomId) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }
   };
   useEffect(scrollToBottom, [messages]);
@@ -60,7 +71,7 @@ const ChatBody = ({
         encrpyted.
       </p>
       <p className="chat__message_reminder chat__createdBy">
-        {roomOwner === user.uid
+        {roomOwner === user?.uid
           ? 'You created this group'
           : `${roomCreatedBy} created this group`}
       </p>
@@ -69,7 +80,7 @@ const ChatBody = ({
         <div
           key={message.id}
           className={`chat__message 
-                    ${message.uid === user.uid && 'chat__sender'} 
+                    ${message.uid === user?.uid && 'chat__sender'} 
                     ${message.photo && 'chat__message_media_image'}
                     ${message.video && 'chat__message_media_video'}
                     ${
@@ -80,7 +91,7 @@ const ChatBody = ({
         >
           <span
             className={`chat__name ${
-              message.uid === user.uid && 'chat__name_sender'
+              message.uid === user?.uid && 'chat__name_sender'
             }`}
           >
             {message.name}
@@ -128,7 +139,7 @@ const ChatBody = ({
           <div className="chat__message_box">
             <div
               className={`chat__message_box_text ${
-                message.uid === user.uid && 'chat__message_box_text_sender'
+                message.uid === user?.uid && 'chat__message_box_text_sender'
               }
               ${
                 message.photo &&
@@ -150,7 +161,8 @@ const ChatBody = ({
 
               <div
                 className={`chat__timestamp_container ${
-                  message.uid === user.uid && 'chat__timestamp_container_sender'
+                  message.uid === user?.uid &&
+                  'chat__timestamp_container_sender'
                 }`}
               >
                 {message.timestamp ? (
@@ -182,7 +194,7 @@ const ChatBody = ({
                           minute: 'numeric',
                         }
                       )}
-                      {message.uid === user.uid ? <DoneIcon /> : null}
+                      {message.uid === user?.uid ? <DoneIcon /> : null}
                     </span>
                   </div>
                 ) : (
@@ -193,7 +205,7 @@ const ChatBody = ({
                         hour12: true,
                         minute: 'numeric',
                       })}
-                      {message.uid === user.uid ? <AlarmIcon /> : null}
+                      {message.uid === user?.uid ? <AlarmIcon /> : null}
                     </span>
                   </div>
                 )}

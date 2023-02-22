@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import db from '../firebase';
 import './SidebarChat.css';
+import { db } from '../firebase';
+import { collection, doc, getDocs, orderBy, query } from 'firebase/firestore';
+import { Message } from '../types';
 
 type Props = {
   id: string;
@@ -12,17 +14,15 @@ type Props = {
 };
 
 const SidebarChat: FC<Props> = ({ id, name }) => {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
     if (id) {
-      db.collection('rooms')
-        .doc(id)
-        .collection('messages')
-        .orderBy('timestamp', 'desc')
-        .onSnapshot((snapshot) =>
-          setMessages(snapshot.docs.map((doc) => doc.data()))
-        );
+      const messagesRef = collection(db, 'rooms', id, 'messages');
+      const q = query(messagesRef, orderBy('timestamp', 'desc'));
+      getDocs(q).then((snap) => {
+        setMessages(snap.docs.map((doc) => ({ id: doc.id, data: doc.data() })));
+      });
     }
   }, [id]);
 

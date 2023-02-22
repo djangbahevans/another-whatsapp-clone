@@ -1,7 +1,21 @@
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import { FC, MouseEventHandler } from 'react';
 
-function DropdownMenu({ menuLists, menu, handleMenuClose }) {
+type Props = {
+  handleMenuClose?: (
+    event: {},
+    reason: 'backdropClick' | 'escapeKeyDown'
+  ) => void;
+  menuLists: {
+    id: number;
+    onClick: MouseEventHandler<HTMLLIElement>;
+    title: string | JSX.Element;
+  }[];
+  menu?: Element | ((element: Element) => Element) | null | undefined;
+};
+
+const DropdownMenu: FC<Props> = ({ menuLists, menu, handleMenuClose }) => {
   return (
     <div>
       <Menu
@@ -18,7 +32,7 @@ function DropdownMenu({ menuLists, menu, handleMenuClose }) {
           vertical: 'top',
           horizontal: 'right',
         }}
-        getContentAnchorEl={null}
+        // getContentAnchorEl={null}
       >
         {menuLists.map((menuList) => (
           <MenuItem key={menuList.id} onClick={menuList.onClick}>
@@ -28,6 +42,6 @@ function DropdownMenu({ menuLists, menu, handleMenuClose }) {
       </Menu>
     </div>
   );
-}
+};
 
 export default DropdownMenu;

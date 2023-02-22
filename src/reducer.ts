@@ -1,4 +1,4 @@
-import { User } from './types';
+import { User } from 'firebase/auth';
 
 export const initialState = {
   user: null,

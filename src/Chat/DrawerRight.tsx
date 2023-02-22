@@ -1,38 +1,27 @@
 //importing material-ui
 import Drawer from '@mui/material/Drawer';
-import { makeStyles } from '@mui/material/styles';
+import { FC, ReactNode } from 'react';
 //importing styles
 import './DrawerRight.css';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: 'flex',
-  },
-  drawerPaper: {
-    [theme.breakpoints.only('xs')]: {
-      width: '100vw',
-    },
-    [theme.breakpoints.up('sm')]: {
-      position: 'absolute',
-    },
-  },
-}));
+type Props = {
+  content: ReactNode;
+  drawerRight: boolean;
+};
 
-function DrawerRight({ content, drawerRight }) {
-  const classes = useStyles();
-
+const DrawerRight: FC<Props> = ({ content, drawerRight }) => {
   return (
     <div>
       <Drawer
         anchor="right"
         variant="persistent"
         open={drawerRight}
-        classes={{ paper: classes.drawerPaper }}
+        sx={{ xs: { width: '100vw' } }}
       >
         {content}
       </Drawer>
     </div>
   );
-}
+};
 
 export default DrawerRight;

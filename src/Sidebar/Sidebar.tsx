@@ -1,9 +1,8 @@
-import { useState, useEffect, FC } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useState, useEffect, FC, MouseEventHandler } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useStateValue } from '../StateProvider';
-//importing firebase
-import db from '../firebase';
-import { auth, storage, firebase } from '../firebase';
+//importing firebase;
+import { auth } from '../firebase';
 //importing components
 import UserAvatar from './UserAvatar';
 import NewChat from './NewChat';
@@ -19,27 +18,27 @@ import CircularProgress from '@mui/material/CircularProgress';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 //importing styles
 import './Sidebar.css';
-import { Room } from '../shared/types';
+import { Room } from '../types';
 
 type Props = {
-  isRoomExist: boolean;
-  setIsRoomExist?(data: boolean): void;
+  isRoomExist: string | number;
+  setIsRoomExist?(data: string | number): void;
   rooms: Room[];
 };
 
 const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { roomId } = useParams();
   const [{ user }] = useStateValue();
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [noRooms, setNoRooms] = useState(false);
   const [drawerLeft, setDrawerLeft] = useState(false);
-  const [menuSidebar, setMenuSidebar] = useState(null);
+  const [menuSidebar, setMenuSidebar] = useState<Element | null>(null);
   const [isSearchFound, setIsSetSearchFound] = useState(false);
 
-  const findRoom = function (myRooms) {
-    return function (x) {
+  const findRoom = function (myRooms: string) {
+    return function (x: Room) {
       var searchRoom = x.data.name + '';
       return (
         searchRoom.toLowerCase().includes(myRooms.toLowerCase()) || !myRooms
@@ -79,15 +78,15 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
       });
 
       if (index >= 0) {
-        setIsRoomExist(index);
+        setIsRoomExist?.(index);
         // console.log("ROOM EXISTS");
       } else if (index === -1) {
-        setIsRoomExist(index);
-        history.push('/');
+        setIsRoomExist?.(index);
+        navigate('/');
         // console.log("ROOM DOES NOT EXIST");
       }
     }
-  }, [search, rooms, roomId, history, setIsRoomExist]);
+  }, [search, rooms, roomId, navigate, setIsRoomExist]);
 
   useEffect(() => {
     if (rooms) {
@@ -109,7 +108,7 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
     setDrawerLeft(true);
   };
 
-  const handleMenuOpen = (event) => {
+  const handleMenuOpen: MouseEventHandler<HTMLButtonElement> = (event) => {
     setMenuSidebar(event.currentTarget);
   };
 
@@ -133,11 +132,11 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
   };
 
   const logout = () => {
-    if (user.isAnonymous === true) {
+    if (user?.isAnonymous === true) {
       auth.currentUser
-        .delete()
+        ?.delete()
         .then(function () {
-          history.push('/');
+          navigate('/');
         })
         .catch(function (error) {
           // An error happened.
@@ -180,21 +179,15 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
     <div className="sidebar">
       <div className="sidebar__header">
         <UserAvatar
-          id="UserProfile"
-          photoURL={user.photoURL}
+          // id="UserProfile"
+          photoURL={user?.photoURL!}
           onClick={() => handleDrawerLeftOpen()}
         />
-        <DrawerLeft
-          drawerLeft={drawerLeft}
-          setDrawerLeft={setDrawerLeft}
-          db={db}
-          auth={auth}
-          storage={storage}
-        />
+        <DrawerLeft drawerLeft={drawerLeft} setDrawerLeft={setDrawerLeft} />
 
         <div className="sidebar__headerRight">
           <Status />
-          <NewChat db={db} user={user} firebase={firebase} />
+          <NewChat user={user} />
           <TooltipCustom
             name="Menu"
             icon={<MoreVertIcon />}
@@ -203,7 +196,7 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
           <DropdownMenu
             menuLists={menuLists}
             menu={menuSidebar}
-            handleMenuOpen={handleMenuOpen}
+            // handleMenuOpen={handleMenuOpen}
             handleMenuClose={handleMenuClose}
           />
         </div>
@@ -226,7 +219,7 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
                       <SidebarChat
                         key={room.id}
                         id={room.id}
-                        name={room.data.name}
+                        name={room.data.name!}
                       />
                     ))}
                   </div>
@@ -242,7 +235,7 @@ const Sidebar: FC<Props> = ({ rooms, setIsRoomExist, isRoomExist }) => {
                   <SidebarChat
                     key={room.id}
                     id={room.id}
-                    name={room.data.name}
+                    name={room.data.name!}
                   />
                 ))}
               </>

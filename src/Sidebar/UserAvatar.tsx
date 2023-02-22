@@ -1,9 +1,9 @@
 import Avatar from '@mui/material/Avatar';
-import { FC } from 'react';
+import { FC, MouseEventHandler } from 'react';
 
 type Props = {
-  photoURL: string;
-  onClick(): void;
+  photoURL?: string;
+  onClick?: MouseEventHandler<HTMLDivElement>;
 };
 
 const UserAvatar: FC<Props> = ({ photoURL, onClick }) => {

@@ -106,13 +106,6 @@ const ChatBody: FC<Props> = ({
                   src={message.photo}
                   // onClick={handleDialogOpen}
                 />
-
-                {/* <DialogCustom 
-                                    open={showDialog}
-                                    close={handleDialogClose}
-                                    photo={message.photo}
-                                    user={user}
-                                /> */}
               </>
             ) : null}
           </div>

@@ -18,7 +18,7 @@ import {
 import { User } from 'firebase/auth';
 
 type Props = {
-  user: User;
+  user: User | null;
 };
 
 const NewChat: FC<Props> = ({ user }) => {
@@ -41,8 +41,8 @@ const NewChat: FC<Props> = ({ user }) => {
       const roomsRef = collection(db, 'rooms');
 
       addDoc(roomsRef, {
-        roomOwner: user.uid,
-        createdBy: user.displayName,
+        roomOwner: user?.uid,
+        createdBy: user?.displayName,
         name: roomName,
         timestamp: serverTimestamp(),
       }).then((docRef) => {

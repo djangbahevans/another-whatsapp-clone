@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { FC, useState } from 'react';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import './SearchBar.css';
 
-function SearchBar({ placeholder, setSearch, search }) {
+type Props = {
+  placeholder: string;
+  setSearch?: (value: string) => void;
+  search: string;
+};
+
+const SearchBar: FC<Props> = ({ placeholder, setSearch, search }) => {
   const [showArrowIcon, setShowArrowIcon] = useState(false);
 
   const displaySearchIcon = () => {
@@ -24,7 +30,7 @@ function SearchBar({ placeholder, setSearch, search }) {
         </span>
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearch?.(e.target.value)}
           type="text"
           placeholder={placeholder}
           required
@@ -34,6 +40,6 @@ function SearchBar({ placeholder, setSearch, search }) {
       </div>
     </div>
   );
-}
+};
 
 export default SearchBar;

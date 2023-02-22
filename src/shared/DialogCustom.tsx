@@ -10,8 +10,17 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 //importing styles
 import './DialogCustom.css';
+import { FC } from 'react';
+import { User } from 'firebase/auth';
 
-function DialogCustom({ open, close, user, photo }) {
+type Props = {
+  open: boolean;
+  close?: () => void;
+  user: User | null;
+  photo: string;
+};
+
+const DialogCustom: FC<Props> = ({ open, close, user, photo }) => {
   return (
     <Dialog
       open={open}
@@ -22,7 +31,7 @@ function DialogCustom({ open, close, user, photo }) {
     >
       <DialogTitle id="alert-dialog-title-dialogCustom">
         <div>
-          <Avatar src={user.photoURL} />
+          <Avatar src={user?.photoURL || undefined} />
         </div>
         <div>
           <IconButton
@@ -42,6 +51,6 @@ function DialogCustom({ open, close, user, photo }) {
       </DialogContent>
     </Dialog>
   );
-}
+};
 
 export default DialogCustom;

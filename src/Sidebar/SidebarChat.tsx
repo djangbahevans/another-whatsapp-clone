@@ -21,7 +21,7 @@ const SidebarChat: FC<Props> = ({ id, name }) => {
       const messagesRef = collection(db, 'rooms', id, 'messages');
       const q = query(messagesRef, orderBy('timestamp', 'desc'));
       getDocs(q).then((snap) => {
-        setMessages(snap.docs.map((doc) => ({ id: doc.id, data: doc.data() })));
+        setMessages(snap.docs.map((doc) => doc.data() as Message));
       });
     }
   }, [id]);
